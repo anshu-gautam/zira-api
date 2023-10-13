@@ -1,15 +1,42 @@
 import express from 'express';
 import User from '../Model/user.js';
 import { auth } from '../middleware/auth.js';
+import ProjectUser from '../Model/projectUser.js';
 
 const userRouter = new express.Router();
 
 userRouter.post('/users', async (req, res) => {
-  const user = new User(req.body);
+  const user = new User({ ...req.body, role: 'admin' });
   try {
     await user.save();
-    const token = await user.generateAuthToken();
-    res.status(201).send({ user, token });
+    delete user.password;
+
+    res.status(201).send({ user });
+  } catch (e) {
+    console.log({ e });
+    res.status(400).send({ error: e });
+  }
+});
+
+userRouter.post('/add_user', async (req, res) => {
+  const { email, password, project } = req.body;
+  const user = new User({ email, password, role: 'standard' });
+
+  try {
+    await user.save();
+    const projectUser = new ProjectUser({ user: user._id, project });
+    await projectUser.save();
+
+    //   {
+    //   user: 'u1',
+    //   project: 'p1'
+    // },
+    // {
+    //   user: 'u1',
+    //   project: 'p3'
+    // },
+
+    res.status(201).send({ message: 'User has been added to the project' });
   } catch (e) {
     console.log({ e });
     res.status(400).send({ error: e });
