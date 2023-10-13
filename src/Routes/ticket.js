@@ -54,4 +54,42 @@ ticketRouter.get('/tickets', auth, async (req, res) => {
   }
 });
 
+ticketRouter.get('/tickets/:ticketId', auth, async (req, res) => {
+  try {
+    const ticketId = req.params.ticketId;
+    const ticket = await Ticket.findOne({
+      owner: req.user._id,
+      _id: ticketId,
+    });
+
+    if (!ticket) {
+      throw new Error('Unauthorized access');
+    }
+    res.status(200).send(ticket);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+ticketRouter.put('/tickets/:ticketId', auth, async (req, res) => {
+  const ticketId = req.params.ticketId;
+  try {
+    const ticket = await Ticket.findOneAndUpdate(
+      {
+        owner: req.user._id,
+        _id: ticketId,
+      },
+      { ...req.body }
+    );
+
+    if (!ticket) {
+      throw new Error('Unauthorized access');
+    }
+
+    res.status(200).send(ticket);
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
 export default ticketRouter;

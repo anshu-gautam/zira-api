@@ -48,6 +48,7 @@ stateRouter.put('/states/:stateId', auth, async (req, res) => {
     state.description = req.body.description;
     state.color = req.body.color;
     await state.save();
+    
     res.status(200).send(state);
   } catch (e) {
     res.status(500).send(e.message);
