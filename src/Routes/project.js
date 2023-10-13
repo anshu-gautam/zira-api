@@ -4,6 +4,7 @@ import { auth } from '../middleware/auth.js';
 import Project from '../Model/project.js';
 import State from '../Model/state.js';
 import Estimate from '../Model/estimate.js';
+import ProjectUser from '../Model/projectUser.js';
 const projectRouter = new express.Router();
 
 projectRouter.post('/projects', auth, async (req, res) => {
@@ -21,10 +22,29 @@ projectRouter.post('/projects', auth, async (req, res) => {
 });
 
 projectRouter.get('/projects', auth, async (req, res) => {
+  const isAdmin = req.user.role === 'admin';
+
   try {
-    const projects = await Project.find({ owner: req.user._id }).populate(
-      'owner'
-    );
+    let projects = [];
+    if (isAdmin) {
+      projects = await Project.find({ owner: req.user._id }).populate('owner');
+    } else {
+      //   {
+      //   user: 'u1',
+      //   project: 'p1'
+      // },
+      // {
+      //   user: 'u1',
+      //   project: 'p3'
+      // },
+
+      const projectUsers = await ProjectUser.find({ user: req.user._id });
+      const projectIds = projectUsers.map((projectUser) => projectUser.project);
+      // [p1, p3]
+
+      projects = await Project.find({ _id: projectIds });
+    }
+
     res.status(200).send(projects);
   } catch (e) {
     res.status(500).send();
