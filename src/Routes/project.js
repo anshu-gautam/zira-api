@@ -5,6 +5,8 @@ import Project from '../Model/project.js';
 import State from '../Model/state.js';
 import Estimate from '../Model/estimate.js';
 import ProjectUser from '../Model/projectUser.js';
+import Ticket from '../Model/ticket.js';
+
 const projectRouter = new express.Router();
 
 projectRouter.post('/projects', auth, async (req, res) => {
@@ -68,6 +70,30 @@ projectRouter.get('/projects/:projectId', auth, async (req, res) => {
     const estimates = await Estimate.find({ project: projectId });
 
     res.status(200).send({ project, states, estimates });
+  } catch (e) {
+    res.status(500).send(e.message);
+  }
+});
+
+projectRouter.get('/projects/:projectId/tickets', auth, async (req, res) => {
+  const isAdmin = req.user.role === 'admin';
+  const projectId = req.params.projectId;
+
+  try {
+    let tickets = [];
+
+    const projectUser = await ProjectUser.findOne({
+      user: req.user._id,
+      project: projectId,
+    });
+
+    if (isAdmin || projectUser) {
+      tickets = await Ticket.find({ project: projectId })
+        .populate('state')
+        .populate('owner');
+    }
+
+    res.status(200).send(tickets);
   } catch (e) {
     res.status(500).send(e.message);
   }
