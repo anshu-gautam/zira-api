@@ -60,11 +60,30 @@ projectRouter.get('/projects/:projectId', auth, async (req, res) => {
     const project = await Project.findOne({
       owner: req.user._id,
       _id: projectId,
-    });
+    });    
 
     if (!project) {
       throw new Error('Unauthorized access');
     }
+    const isAdmin = req.user.role ==='admin'
+    if(isAdmin){
+      const project = await Project.findOne({
+        _id: projectId,
+        owner: req.user._id,
+    })
+  }
+  if (!project) {
+    throw new Error('Unauthorized access');
+  }
+  else {
+    const projectUser = await ProjectUser.findOne({
+      project: projectId,
+      user: req.user._id,
+    });
+    if (!projectUser) {
+      throw new Error('Unauthorized access');
+    }
+  }
 
     const states = await State.find({ project: projectId });
     const estimates = await Estimate.find({ project: projectId });
